@@ -22,7 +22,11 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+		// My modify
+		"allowJs": true,
+    "isolatedModules": true,
   },
   "include": ["src"]
 }

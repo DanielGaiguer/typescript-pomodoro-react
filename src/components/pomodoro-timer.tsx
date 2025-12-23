@@ -4,7 +4,7 @@ import { Button } from './button';
 import { Timer } from './timer';
 import bellStart from '../sounds/bell-start.mp3';
 import bellFinish from '../sounds/bell-finish.mp3';
-import { secondsToTime } from '../utils/seconds-to-time';
+import { secondsToMinutes } from '../utils/seconds-to-minutes';
 
 const audioStartWorking = new Audio(bellStart);
 const audioStopWorking = new Audio(bellFinish);
@@ -30,19 +30,7 @@ export function PomodoroTimer(props: Props): JSX.Element {
   const [fullRestingTime, setFullRestingTime] = React.useState(0);
   const [numberOfPomodoros, setNumberOfPomodoros] = React.useState(0);
 
-  useInterval(
-    () => {
-      setMainTime((prev) => {
-        if (prev === 1) {
-          console.log(prev);
-          handleTimeEnd(); // agora chamado dentro do setState
-          return 0;
-        }
-        return prev - 1;
-      });
-    },
-    timeCounting ? 1000 : null,
-  );
+  const isHandlingEndRef = React.useRef(false);
 
   const configureWork = useCallback(() => {
     setTimeCounting(true);
@@ -70,11 +58,16 @@ export function PomodoroTimer(props: Props): JSX.Element {
   );
 
   const handleTimeEnd = useCallback(() => {
+    if (isHandlingEndRef.current) return; // 🔒 trava
+    isHandlingEndRef.current = true; //Isso significa: “Se o fim do tempo já foi processado, não faça nada.”
+    // Ou seja: Primeira execução → passa Segunda execução (Strict Mode) → é bloqueada
+
     if (working && cyclesQtdManager.length > 0) {
       console.log(cyclesQtdManager);
       configureRest(false);
-      cyclesQtdManager.pop();
+      setCyclesQtdManager((prev) => prev.slice(0, -1));
     } else if (working && cyclesQtdManager.length <= 0) {
+      console.log(cyclesQtdManager);
       configureRest(true);
       setCyclesQtdManager(new Array(props.cycles - 1).fill(true));
       setCompletedCycles(completedCycles + 1);
@@ -96,6 +89,24 @@ export function PomodoroTimer(props: Props): JSX.Element {
     props.cycles,
   ]);
 
+  useInterval(
+    () => {
+      setMainTime((prev) => {
+        if (working) setFullWorkingTime(fullWorkingTime + 1);
+        if (resting) setFullRestingTime(fullRestingTime + 1);
+        if (prev <= 1) {
+          setTimeCounting(false); // ⛔ para o intervalo
+          handleTimeEnd(); // ✅ UMA ÚNICA VEZ
+          setTimeCounting(true);
+          return 0;
+        }
+        isHandlingEndRef.current = false; // 🔓 novo tick
+        return prev - 1;
+      });
+    },
+    timeCounting ? 1000 : null,
+  );
+
   // Toda vez que Work mudar, isso ira ser executado
   useEffect(() => {
     if (working) document.body.classList.add('working');
@@ -104,7 +115,7 @@ export function PomodoroTimer(props: Props): JSX.Element {
 
   return (
     <div className="pomodoro">
-      <h2>You are: working</h2>
+      <h2>Você está: {working ? 'Trabalhando' : 'Descansando'}</h2>
       <Timer mainTime={mainTime} />
 
       <div className="controls">
@@ -119,8 +130,8 @@ export function PomodoroTimer(props: Props): JSX.Element {
 
       <div className="details">
         <p>Ciclos Concluidos: {completedCycles}</p>
-        <p>Horas Trabalhadas: {secondsToTime(fullWorkingTime)}</p>
-        <p>Horas Descansadas: {secondsToTime(fullRestingTime)}</p>
+        <p>Horas Trabalhadas: {secondsToMinutes(fullWorkingTime)}</p>
+        <p>Horas Descansadas: {secondsToMinutes(fullRestingTime)}</p>
         <p>Pomodoros Concluidos: {numberOfPomodoros}</p>
       </div>
     </div>

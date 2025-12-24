@@ -4,7 +4,7 @@ import { Button } from './button';
 import { Timer } from './timer';
 import bellStart from '../sounds/bell-start.mp3';
 import bellFinish from '../sounds/bell-finish.mp3';
-import { secondsToMinutes } from '../utils/seconds-to-minutes';
+import { secondsToTime } from '../utils/seconds-to-time';
 
 const audioStartWorking = new Audio(bellStart);
 const audioStopWorking = new Audio(bellFinish);
@@ -130,8 +130,8 @@ export function PomodoroTimer(props: Props): JSX.Element {
 
       <div className="details">
         <p>Ciclos Concluidos: {completedCycles}</p>
-        <p>Horas Trabalhadas: {secondsToMinutes(fullWorkingTime)}</p>
-        <p>Horas Descansadas: {secondsToMinutes(fullRestingTime)}</p>
+        <p>Horas Trabalhadas: {secondsToTime(fullWorkingTime)}</p>
+        <p>Horas Descansadas: {secondsToTime(fullRestingTime)}</p>
         <p>Pomodoros Concluidos: {numberOfPomodoros}</p>
       </div>
     </div>

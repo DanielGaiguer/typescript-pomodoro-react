@@ -5,6 +5,8 @@ import { Timer } from './timer';
 import bellStart from '../sounds/bell-start.mp3';
 import bellFinish from '../sounds/bell-finish.mp3';
 import { secondsToTime } from '../utils/seconds-to-time';
+import { loadFromLocalStorage } from '../utils/load-localStorage';
+import { saveToLocalStorage } from '../utils/saved-localStorage';
 
 const audioStartWorking = new Audio(bellStart);
 const audioStopWorking = new Audio(bellFinish);
@@ -67,7 +69,6 @@ export function PomodoroTimer(props: Props): JSX.Element {
       configureRest(false);
       setCyclesQtdManager((prev) => prev.slice(0, -1));
     } else if (working && cyclesQtdManager.length <= 0) {
-      console.log(cyclesQtdManager);
       configureRest(true);
       setCyclesQtdManager(new Array(props.cycles - 1).fill(true));
       setCompletedCycles(completedCycles + 1);
@@ -89,11 +90,25 @@ export function PomodoroTimer(props: Props): JSX.Element {
     props.cycles,
   ]);
 
+  const savedAllLocalStorage = (): void => {
+    saveToLocalStorage('completedCycles', completedCycles);
+    saveToLocalStorage('fullWorkingTime', fullWorkingTime);
+    saveToLocalStorage('fullRestingTime', fullRestingTime);
+    saveToLocalStorage('numberOfPomodoros', numberOfPomodoros);
+    console.log('Salvei os dados no Localstorage');
+  };
+
   useInterval(
     () => {
       setMainTime((prev) => {
-        if (working) setFullWorkingTime(fullWorkingTime + 1);
-        if (resting) setFullRestingTime(fullRestingTime + 1);
+        if (working) {
+          setFullWorkingTime(fullWorkingTime + 1);
+          if (fullWorkingTime % 60 === 0) savedAllLocalStorage();
+        }
+        if (resting) {
+          setFullRestingTime(fullRestingTime + 1);
+          if (fullRestingTime % 60 === 0) savedAllLocalStorage();
+        }
         if (prev <= 1) {
           setTimeCounting(false); // ⛔ para o intervalo
           handleTimeEnd(); // ✅ UMA ÚNICA VEZ
@@ -112,6 +127,44 @@ export function PomodoroTimer(props: Props): JSX.Element {
     if (working) document.body.classList.add('working');
     if (resting) document.body.classList.remove('working');
   }, [working, resting]);
+
+  //Vai pegar os dados do localStorage, se existir, vai carregar no estado
+  const loadAllLocalStorage = (
+    savedCompletedCycles: number,
+    savedFullWorkingTime: number,
+    savedFullRestingTime: number,
+    savedNumberOfPomodoros: number,
+  ): void => {
+    // queueMicrotask adia a execução do setState para depois do render atual, evitando warnings de "cascading renders" no React 18+
+    if (savedCompletedCycles) {
+      queueMicrotask(() => setCompletedCycles(savedCompletedCycles));
+    }
+    if (savedFullWorkingTime) {
+      queueMicrotask(() => setFullWorkingTime(savedFullWorkingTime));
+    }
+    if (savedFullRestingTime) {
+      queueMicrotask(() => setFullRestingTime(savedFullRestingTime));
+    }
+    if (savedNumberOfPomodoros) {
+      queueMicrotask(() => setNumberOfPomodoros(savedNumberOfPomodoros));
+    }
+    console.log('Peguei os dados do LocalStorage');
+  };
+
+  //Vai chamar a funcao, que vai pegar os dados de tal dia
+  useEffect(() => {
+    const savedCompletedCycles = loadFromLocalStorage('completedCycles');
+    const savedFullWorkingTime = loadFromLocalStorage('fullWorkingTime');
+    const savedFullRestingTime = loadFromLocalStorage('fullRestingTime');
+    const savedNumberOfPomodoros = loadFromLocalStorage('numberOfPomodoros');
+
+    loadAllLocalStorage(
+      savedCompletedCycles,
+      savedFullWorkingTime,
+      savedFullRestingTime,
+      savedNumberOfPomodoros,
+    );
+  }, []);
 
   return (
     <div className="pomodoro">

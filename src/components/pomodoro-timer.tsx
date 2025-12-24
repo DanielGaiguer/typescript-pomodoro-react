@@ -65,7 +65,6 @@ export function PomodoroTimer(props: Props): JSX.Element {
     // Ou seja: Primeira execução → passa Segunda execução (Strict Mode) → é bloqueada
 
     if (working && cyclesQtdManager.length > 0) {
-      console.log(cyclesQtdManager);
       configureRest(false);
       setCyclesQtdManager((prev) => prev.slice(0, -1));
     } else if (working && cyclesQtdManager.length <= 0) {
@@ -95,7 +94,6 @@ export function PomodoroTimer(props: Props): JSX.Element {
     saveToLocalStorage('fullWorkingTime', fullWorkingTime);
     saveToLocalStorage('fullRestingTime', fullRestingTime);
     saveToLocalStorage('numberOfPomodoros', numberOfPomodoros);
-    console.log('Salvei os dados no Localstorage');
   };
 
   useInterval(
@@ -148,7 +146,6 @@ export function PomodoroTimer(props: Props): JSX.Element {
     if (savedNumberOfPomodoros) {
       queueMicrotask(() => setNumberOfPomodoros(savedNumberOfPomodoros));
     }
-    console.log('Peguei os dados do LocalStorage');
   };
 
   //Vai chamar a funcao, que vai pegar os dados de tal dia
